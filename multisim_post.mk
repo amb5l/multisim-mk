@@ -28,14 +28,14 @@ endif
 
 define RUN
 run: $(RUN_DEP)
-	ifeq ($(SIM),ghdl)
+ifeq ($(SIM),ghdl)
 	$(GHDL) -r $(SIM_TOP) $(GHDL_ROPTS)
-	else ifeq ($(SIM),nvc)
+else ifeq ($(SIM),nvc)
 	$(NVC) $(NVC_GOPTS) -e $(SIM_TOP) $(NVC_EOPTS)
 	$(NVC) $(NVC_GOPTS) -r $(SIM_TOP) $(NVC_ROPTS)
-	else ifeq ($(SIM),msq)
+else ifeq ($(SIM),msq)
 	$(MSQ_VSIM) $(MSQ_VSIMOPTS) $(SIM_TOP)
-	endif
+endif
 endef
 
 define RUN_GEN
