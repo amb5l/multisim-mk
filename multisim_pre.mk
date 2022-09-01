@@ -35,7 +35,7 @@ LOOKUP=$(word 2,$(subst ;, ,$(filter $1;%,$(join $2,$(addprefix ;,$3)))))
 
 GHDL=ghdl
 GHDL_AOPTS=-fsynopsys
-GHDL_EOPTS=
+GHDL_EOPTS=-fsynopsys
 GHDL_ROPTS=--unbuffered
 
 ifeq ($(VHDL_RELAXED),TRUE)
