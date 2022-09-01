@@ -12,11 +12,11 @@ When invoking make, the simulator must be specified (as a make target) as follow
 
 Supported simulators are listed below:
 
-| \<simulator\> | Description                    |
-|---------------|--------------------------------|
-| ghdl          | GHDL                           |
-| nvc           | NVC                            |
-| gen           | Generic (Questa, ModelSim etc) |
+| \<simulator\> | Description     |
+|---------------|-----------------|
+| ghdl          | GHDL            |
+| nvc           | NVC             |
+| msq           | ModelSim/Questa |
 
 ## License
 
