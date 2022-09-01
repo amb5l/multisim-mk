@@ -20,34 +20,18 @@ $(NVC_DLL): $(NVC_UNITS)
 
 ifeq ($(SIM),ghdl)
 RUN_DEP=$(GHDL_EXE)
+RUN_CMD=$(GHDL) -r $(SIM_TOP) $(GHDL_ROPTS) $(strip $(addprefix -g,$(subst ;, ,$1)))
 else ifeq ($(SIM),nvc)
 RUN_DEP=$(NVC_UNITS)
+RUN_CMD=$(NVC) $(NVC_GOPTS) -e $(SIM_TOP) $(NVC_EOPTS) $(strip $(addprefix -g,$(subst ;, ,$1))); $(NVC) $(NVC_GOPTS) -r $(SIM_TOP) $(NVC_ROPTS)
 else ifeq ($(SIM),msq)
 RUN_DEP=$(MSQ_UNITS)
+RUN_CMD=$(MSQ_VSIM) $(MSQ_VSIMOPTS) $(SIM_TOP) $(strip $(addprefix -g,$(subst ;, ,$1)))
 endif
 
 define RUN
 run: $(RUN_DEP)
-ifeq ($(SIM),ghdl)
-	$(GHDL) -r $(SIM_TOP) $(GHDL_ROPTS)
-else ifeq ($(SIM),nvc)
-	$(NVC) $(NVC_GOPTS) -e $(SIM_TOP) $(NVC_EOPTS)
-	$(NVC) $(NVC_GOPTS) -r $(SIM_TOP) $(NVC_ROPTS)
-else ifeq ($(SIM),msq)
-	$(MSQ_VSIM) $(MSQ_VSIMOPTS) $(SIM_TOP)
-endif
-endef
-
-define RUN_GEN
-$(eval SIM_GEN=$(strip $(addprefix -g,$(subst ;, ,$1))))
-ifeq ($(SIM),ghdl)
-	$(GHDL) -r $(SIM_TOP) $(GHDL_ROPTS) $(SIM_GEN)
-else ifeq ($(SIM),nvc)
-	$(NVC) $(NVC_GOPTS) -e $(SIM_TOP) $(NVC_EOPTS) $(SIM_GEN)
-	$(NVC) $(NVC_GOPTS) -r $(SIM_TOP) $(NVC_ROPTS)
-else ifeq ($(SIM),msq)
-	$(MSQ_VSIM) $(MSQ_VSIMOPTS) $(SIM_TOP) $(SIM_GEN)
-endif
+	$(RUN_CMD)
 endef
 
 ghdl: run
