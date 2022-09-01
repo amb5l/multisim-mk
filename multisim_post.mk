@@ -6,14 +6,18 @@
 # rule/recipe for elaboration step (GHDL, NVC)
 
 # GHDL
+ifeq ($(SIM),ghdl)
 GHDL_EXE=$(SIM_TOP)$(EXE_EXT)
 $(GHDL_EXE): $(GHDL_UNITS)
 	$(GHDL) -e $(GHDL_EOPTS) $(SIM_TOP)
+endif
 
 # NVC
+ifeq ($(SIM),nvc)
 NVC_DLL=$(NVC_WORK_DIR)/_$(NVC_WORK_NAME).elab.dll
 $(NVC_DLL): $(NVC_UNITS)
 	$(NVC) $(NVC_GOPTS) -e $(SIM_TOP) $(NVC_EOPTS)
+endif
 
 ################################################################################
 # rule/recipe for run step
@@ -43,8 +47,8 @@ msq:  run
 
 clean::
 	rm -f $(GHDL_EXE) *.cf *.o *.lst
-	rm -f *.$(MSQ_VCOM_LOG_EXT) *.ini transcript
 	rm -rf $(NVC_WORK_DIR)
+	rm -f *.$(MSQ_VCOM_LOG_EXT) *.ini transcript
 	rm -rf $(MSQ_WORK)
 
 ################################################################################

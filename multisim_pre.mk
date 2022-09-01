@@ -33,6 +33,8 @@ LOOKUP=$(word 2,$(subst ;, ,$(filter $1;%,$(join $2,$(addprefix ;,$3)))))
 ################################################################################
 # GHDL definitions
 
+ifeq ($(SIM),ghdl)
+
 GHDL=ghdl
 GHDL_AOPTS=-fsynopsys
 GHDL_EOPTS=-fsynopsys
@@ -50,11 +52,16 @@ ifeq ($(VHDL_SUPPRESS_IEEE_ASSERTS),TRUE)
 	GHDL_ROPTS:=$(GHDL_ROPTS) --ieee-asserts=disable
 endif
 
+endif
+
 ################################################################################
 # NVC definitions
 
 NVC_WORK=work
 NVC_WORK_DIR=nvc_work
+
+ifeq ($(SIM),nvc)
+
 NVC_WORK_NAME=$(shell echo $(NVC_WORK)| tr a-z A-Z)
 NVC=nvc
 NVC_GOPTS=--work=$(NVC_WORK):$(NVC_WORK_DIR)
@@ -74,13 +81,18 @@ endif
 
 NVC_PREFIX=$(NVC_WORK_DIR)/$(NVC_WORK_NAME).
 
+endif
+
 ################################################################################
-# Questa, ModelSim etc definitions
+# ModelSim/Questa definitions
 
 MSQ_WORK=msq_work
+MSQ_VCOM_LOG_EXT=vcom.log
+
+ifeq ($(SIM),msq)
+
 MSQ_VCOM=vcom
 MSQ_VCOMOPTS=-work $(MSQ_WORK) -explicit -vopt -stats=none
-MSQ_VCOM_LOG_EXT=vcom.log
 MSQ_VSIM=vsim
 MSQ_VSIMOPTS=-work $(MSQ_WORK) -t ps -c -onfinish stop -do "onfinish exit; run -all"
 
@@ -91,8 +103,10 @@ ifeq ($(VHDL_SUPPRESS_IEEE_ASSERTS),TRUE)
 	MSQ_VSIMOPTS:=-do "set NumericStdNoWarnings 1" $(MSQ_VSIMOPTS)
 endif
 
+endif
+
 ################################################################################
-# runtime rule/recipe for analysis step (GHDL, NVC, Questa/ModelSim etc)
+# runtime rule/recipe for analysis step (GHDL, NVC, ModelSim/Questa)
 
 define UNIT
 
@@ -100,21 +114,27 @@ SIM_TOP=$(strip $(1))
 SIM_UNITS=$(SIM_UNITS) $(strip $(1))
 
 # GHDL: compiled file takes name from source file
+ifeq ($(SIM),ghdl)
 GHDL_UNITS=$(GHDL_UNITS) $(notdir $(basename $(strip $(2)))).o
 GHDL_UNIT_DEPS=
 $(foreach K,$(strip $(3)),$(eval GHDL_UNIT_DEPS=$(GHDL_UNIT_DEPS) $(call LOOKUP,$K,$(SIM_UNITS),$(GHDL_UNITS))))
 $(notdir $(basename $(strip $(2)))).o: $(strip $(2)) $(GHDL_UNIT_DEPS)
 	$(GHDL) -a $(GHDL_AOPTS) $$<
+endif
 
 # NVC: compiled file takes name from design unit
+ifeq ($(SIM),nvc)
 NVC_UNITS=$(NVC_UNITS) $(NVC_PREFIX)$(shell echo $(strip $(1))| tr a-z A-Z)
 $(NVC_PREFIX)$(shell echo $(strip $(1))| tr a-z A-Z): $(strip $(2)) $(addprefix $(NVC_PREFIX),$(shell echo $(strip $(3))| tr a-z A-Z))
 	$(NVC) $(NVC_GOPTS) -a $$< $(NVC_AOPTS)
+endif
 
-# Questa, ModelSim etc: use log files to record compilation status
+# ModelSim/Questa: use log files to record compilation status
+ifeq ($(SIM),msq)
 MSQ_UNITS=$(MSQ_UNITS) $(strip $(1)).$(MSQ_VCOM_LOG_EXT)
 $(strip $(1)).$(MSQ_VCOM_LOG_EXT): $(strip $(2)) $(addsuffix .$(MSQ_VCOM_LOG_EXT),$(strip $(3)))
 	$(MSQ_VCOM) $(MSQ_VCOMOPTS) $$< >$(strip $(1)).$(MSQ_VCOM_LOG_EXT)
+endif
 
 endef
 
