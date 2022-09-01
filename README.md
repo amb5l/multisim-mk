@@ -4,9 +4,9 @@ Simple support for driving VHDL simulators from makefiles.
 
 To get started:
 1. Add multisim-mk to your repo as a submodule.
-2. Copy the template makefile to your build directory and edit it to add your design units, sources, and dependancies.
+2. Copy the template makefile to your build directory and edit it as required for your design.
 
-When invoking make, the simulator must be specified (as a make target) as follows:
+When invoking make, the simulator must be specified (as a make target):
 
     make <simulator>
 
@@ -17,6 +17,9 @@ Supported simulators are listed below:
 | ghdl          | GHDL            |
 | nvc           | NVC             |
 | msq           | ModelSim/Questa |
+| vivado        | Vivado          |
+
+When used with Vivado, multisim-mk depends on xilinx-mk, so you will need to add this as another submodule to your repo.
 
 ## License
 

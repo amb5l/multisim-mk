@@ -11,9 +11,10 @@ all:
 	$(info make <simulator>)
 	$(info )
 	$(info Supported options for <simulator>:)
-	$(info ghdl (for GHDL))
-	$(info nvc (for NVC))
-	$(info msq (for ModelSim/Questa))
+	$(info ghdl    (for GHDL))
+	$(info nvc     (for NVC))
+	$(info msq     (for ModelSim/Questa))
+	$(info vivado  (for Vivado))
 	$(info )
 	$(error No simulator specified)
 
@@ -106,34 +107,62 @@ endif
 endif
 
 ################################################################################
+# Vivado definitions
+
+ifeq ($(SIM),vivado)
+
+ifeq (REPO_ROOT,)
+$(error REPO_ROOT not defined)
+endif
+ifeq (SUBMODULES,)
+$(error SUBMODULES not defined)
+endif
+XILINX_MK=$(SUBMODULES)/xilinx-mk
+ifeq ($(wildcard $(XILINX_MK)/.*),)
+$(error xilinx-mk submodule not found)
+endif
+
+VIVADO_DIR=vivado
+VIVADO_PROJ=sim
+VIVADO_XPR=$(VIVADO_DIR)/$(VIVADO_PROJ).xpr
+VIVADO_MK=vivado -mode tcl -notrace -nolog -nojournal -source $(XILINX_MK)/vivado_mk.tcl -tclargs $(VIVADO_DIR) $(VIVADO_PROJ)
+
+endif
+
+################################################################################
 # runtime rule/recipe for analysis step (GHDL, NVC, ModelSim/Questa)
 
 define UNIT
 
-SIM_TOP=$(strip $(1))
-SIM_UNITS=$(SIM_UNITS) $(strip $(1))
+SIM_TOP=$(strip $1)
+SIM_UNITS=$(SIM_UNITS) $(strip $1)
 
 # GHDL: compiled file takes name from source file
 ifeq ($(SIM),ghdl)
-GHDL_UNITS=$(GHDL_UNITS) $(notdir $(basename $(strip $(2)))).o
+GHDL_UNITS=$(GHDL_UNITS) $(notdir $(basename $(strip $2))).o
 GHDL_UNIT_DEPS=
-$(foreach K,$(strip $(3)),$(eval GHDL_UNIT_DEPS=$(GHDL_UNIT_DEPS) $(call LOOKUP,$K,$(SIM_UNITS),$(GHDL_UNITS))))
-$(notdir $(basename $(strip $(2)))).o: $(strip $(2)) $(GHDL_UNIT_DEPS)
+$(foreach K,$(strip $3),$(eval GHDL_UNIT_DEPS=$(GHDL_UNIT_DEPS) $(call LOOKUP,$K,$(SIM_UNITS),$(GHDL_UNITS))))
+$(notdir $(basename $(strip $2))).o: $(strip $2) $(GHDL_UNIT_DEPS)
 	$(GHDL) -a $(GHDL_AOPTS) $$<
 endif
 
 # NVC: compiled file takes name from design unit
 ifeq ($(SIM),nvc)
-NVC_UNITS=$(NVC_UNITS) $(NVC_PREFIX)$(shell echo $(strip $(1))| tr a-z A-Z)
-$(NVC_PREFIX)$(shell echo $(strip $(1))| tr a-z A-Z): $(strip $(2)) $(addprefix $(NVC_PREFIX),$(shell echo $(strip $(3))| tr a-z A-Z))
+NVC_UNITS=$(NVC_UNITS) $(NVC_PREFIX)$(shell echo $(strip $1)| tr a-z A-Z)
+$(NVC_PREFIX)$(shell echo $(strip $1)| tr a-z A-Z): $(strip $2) $(addprefix $(NVC_PREFIX),$(shell echo $(strip $3)| tr a-z A-Z))
 	$(NVC) $(NVC_GOPTS) -a $$< $(NVC_AOPTS)
 endif
 
 # ModelSim/Questa: use log files to record compilation status
 ifeq ($(SIM),msq)
-MSQ_UNITS=$(MSQ_UNITS) $(strip $(1)).$(MSQ_VCOM_LOG_EXT)
-$(strip $(1)).$(MSQ_VCOM_LOG_EXT): $(strip $(2)) $(addsuffix .$(MSQ_VCOM_LOG_EXT),$(strip $(3)))
-	$(MSQ_VCOM) $(MSQ_VCOMOPTS) $$< >$(strip $(1)).$(MSQ_VCOM_LOG_EXT)
+MSQ_UNITS=$(MSQ_UNITS) $(strip $1).$(MSQ_VCOM_LOG_EXT)
+$(strip $1).$(MSQ_VCOM_LOG_EXT): $(strip $2) $(addsuffix .$(MSQ_VCOM_LOG_EXT),$(strip $3))
+	$(MSQ_VCOM) $(MSQ_VCOMOPTS) $$< >$(strip $1).$(MSQ_VCOM_LOG_EXT)
+endif
+
+# Vivado: add source file to list for later processing
+ifeq ($(SIM),vivado)
+VIVADO_SRC=$(strip $2) $(VIVADO_SRC)
 endif
 
 endef

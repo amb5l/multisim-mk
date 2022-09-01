@@ -3,20 +3,24 @@
 # See https://github.com/amb5l/multisim-mk									   #
 # include this in your makefile after your unit declarations				   #
 ################################################################################
-# rule/recipe for elaboration step (GHDL, NVC)
+# GHDL elaboration step
 
-# GHDL
 ifeq ($(SIM),ghdl)
 GHDL_EXE=$(SIM_TOP)$(EXE_EXT)
 $(GHDL_EXE): $(GHDL_UNITS)
 	$(GHDL) -e $(GHDL_EOPTS) $(SIM_TOP)
 endif
 
-# NVC
-ifeq ($(SIM),nvc)
-NVC_DLL=$(NVC_WORK_DIR)/_$(NVC_WORK_NAME).elab.dll
-$(NVC_DLL): $(NVC_UNITS)
-	$(NVC) $(NVC_GOPTS) -e $(SIM_TOP) $(NVC_EOPTS)
+################################################################################
+# Vivado project
+
+ifeq ($(SIM),vivado)
+$(VIVADO_XPR): $(VIVADO_SRC)
+ifeq ($(VHDL_STANDARD),2008)
+	$(VIVADO_MK) create VHDL none sim_vhdl_2008: $(VIVADO_SRC) sim_top: $(SIM_TOP)
+else
+	$(VIVADO_MK) create VHDL none sim_vhdl: $(VIVADO_SRC) sim_top: $(SIM_TOP)
+endif
 endif
 
 ################################################################################
@@ -31,6 +35,9 @@ RUN_CMD=$(NVC) $(NVC_GOPTS) -e $(SIM_TOP) $(NVC_EOPTS) $(strip $(addprefix -g,$(
 else ifeq ($(SIM),msq)
 RUN_DEP=$(MSQ_UNITS)
 RUN_CMD=$(MSQ_VSIM) $(MSQ_VSIMOPTS) $(SIM_TOP) $(strip $(addprefix -g,$(subst ;, ,$1)))
+else ifeq ($(SIM),vivado)
+RUN_DEP=$(VIVADO_XPR)
+RUN_CMD=$(VIVADO_MK) simulate gen: $(strip $(subst ;, ,$1))
 endif
 
 define RUN
@@ -39,16 +46,17 @@ run: $(RUN_DEP)
 endef
 
 ghdl: run
-nvc:  run
-msq:  run
+nvc: run
+msq: run
+vivado: run
 
 ################################################################################
 # cleanup
 
 clean::
-	rm -f $(GHDL_EXE) *.cf *.o *.lst
+	rm -f $(wildcard *.exe) $(wildcard *.cf) $(wildcard *.o) $(wildcard *.lst)
 	rm -rf $(NVC_WORK_DIR)
-	rm -f *.$(MSQ_VCOM_LOG_EXT) *.ini transcript
+	rm -f $(wildcard *.$(MSQ_VCOM_LOG_EXT)) $(wildcard *.ini) transcript
 	rm -rf $(MSQ_WORK)
 
 ################################################################################
