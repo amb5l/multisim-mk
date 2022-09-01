@@ -51,4 +51,55 @@ $(eval $(call UNIT, my_top  , $(SRC)/my_design/my_comp.vhd , my_comp my_pkg ))
 include $(MULTISIM_MK)/multisim_post.mk
 
 ################################################################################
+# Run setup - simple example. Keep this or the one below, not both.
+
+$(eval $(call RUN))
+
+################################################################################
+# Run setup - complex example. Testbench reads in binary files and outputs BMP
+# files that you want to check against known good ones. The TB entity has
+# generics that specify the files. We run the testbench once for each test
+# case.
+
+# Input, output and comparison (known good) files.
+TESTS=test1 test2 test3
+DATA_DIR=$(SRC)/my_design/data
+INFILES=$(addprefix $(DATA_DIR)/,$(addsuffix .bin,$(TESTS)))
+OUTFILES=$(addsuffix .bmp,$(TESTS))
+CMPFILES=$(addprefix $(DATA_DIR)/,$(addsuffix .bmp,$(TESTS)))
+
+# Here we generate rules/recipes for the output file for each test case.
+# Make sure you include $(RUN_DEP) as a prerequsite in rules that invoke
+# simulation. Note the call to RUN_GEN to run the simulation with specified
+# generics (no spaces, semicolon seperator). Note also the use of the useful
+# LOOKUP function.
+define RR_OUTFILE
+$1: $2 $(RUN_DEP)
+	$(call RUN_GEN,infile=$2;outfile=$(basename $1))
+endef
+$(foreach OUTFILE,$(OUTFILES),$(eval $(call RR_OUTFILE,$(OUTFILE),$(call LOOKUP,$(OUTFILE),$(OUTFILES),$(INFILES)))))
+
+# Here we generate the rules/recipes for the comparison files: these will be
+# out of date until touched after a successful comparison. Their prerequisites
+# are the corresponding output files.
+define RR_CMPFILE
+$1: $2
+	diff --binary $$@ $$<
+	touch $$@
+endef
+$(foreach CMPFILE,$(CMPFILES),$(eval $(call RR_CMPFILE,$(CMPFILE),$(call LOOKUP,$(CMPFILE),$(CMPFILES),$(OUTFILES)))))
+
+# You must include this rule - it's a prerequisite of the rules named after
+# the supported simulators (e.g. ghdl). In this case its prerequisites are
+# the comparison (known good) BMP files.
+run: $(CMPFILES)
+
+################################################################################
+# add supplementary clean recipes here
+
+# example: for BMP files...
+clean::
+    rm -f *.bmp
+
+################################################################################
 # end of file

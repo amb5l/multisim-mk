@@ -1,43 +1,34 @@
 ################################################################################
-# multisim_pre.mk                                                              #
-# See https://github.com/amb5l/multisim-mk                                     #
-# include this in your makefile before your unit declarations                  #
+# multisim_pre.mk															   #
+# See https://github.com/amb5l/multisim-mk									   #
+# include this in your makefile before your unit declarations				   #
 ################################################################################
 # error if simulator not specified
 
 all:
-	$(info *** Please specify your chosen simulator after 'make' as follows: ***)
+	$(info )
+	$(info Please specify your chosen simulator after 'make' as follows:)
 	$(info make <simulator>)
 	$(info )
 	$(info Supported options for <simulator>:)
 	$(info ghdl (for GHDL))
 	$(info nvc (for NVC))
-	$(info gen (generic - for Questa, ModelSim etc))
-	$(info vivado (for AMD/Xilinx Vivado))
+	$(info msq (for ModelSim/Questa))
 	$(info )
 	$(error No simulator specified)
 
 ################################################################################
 # global definitions
 
+SIM=$(MAKECMDGOALS)
+
 # get file extension for executables on this OS
 ifeq ($(OS),Windows_NT)
 	EXE_EXT=.exe
 endif
 
-# key-value lookup shell command
-define LOOKUP
-LOOKUPS=($(1)); \
-KEYS=($(2)); \
-VALUES=($(3)); \
-for i in $${!LOOKUPS[@]}; do \
-    for j in $${!KEYS[@]}; do \
-        if [[ "$${LOOKUPS[$$i]}" ==  "$${KEYS[$$j]}" ]]; then \
-            echo "$${VALUES[$$j]}"; \
-        fi; \
-    done; \
-done
-endef
+# key-value lookup
+LOOKUP=$(word 2,$(subst ;, ,$(filter $1;%,$(join $2,$(addprefix ;,$3)))))
 
 ################################################################################
 # GHDL definitions
@@ -62,11 +53,14 @@ endif
 ################################################################################
 # NVC definitions
 
-NVC_WORK=nvc_work
+NVC_WORK=work
+NVC_WORK_DIR=nvc_work
+NVC_WORK_NAME=$(shell echo $(NVC_WORK)| tr a-z A-Z)
 NVC=nvc
-NVC_GOPTS=--work=$(NVC_WORK)
+NVC_GOPTS=--work=$(NVC_WORK):$(NVC_WORK_DIR)
 NVC_AOPTS=
 NVC_EOPTS=
+NVC_ROPTS=
 
 ifeq ($(VHDL_RELAXED),TRUE)
 	NVC_AOPTS:=$(NVC_AOPTS) --relaxed
@@ -74,29 +68,27 @@ endif
 ifeq ($(VHDL_STANDARD),2008)
 	NVC_GOPTS:=--std=08 $(NVC_GOPTS)
 endif
-ifdef $(VHDL_SUPPRESS_IEEE_ASSERTS)
-	NVC_ROPTS:=$(GHDL_ROPTS) --ieee-warnings=off
+ifeq ($(VHDL_SUPPRESS_IEEE_ASSERTS),TRUE)
+	NVC_ROPTS:=$(NVC_ROPTS) --ieee-warnings=off
 endif
 
-NVC_PREFIX=$(NVC_WORK)/$(shell echo $(NVC_WORK)| tr a-z A-Z).
+NVC_PREFIX=$(NVC_WORK_DIR)/$(NVC_WORK_NAME).
 
 ################################################################################
 # Questa, ModelSim etc definitions
 
-GEN_WORK=gen_work
-GEN_VCOM=vcom
-GEN_VCOMOPTS=-work $(GEN_WORK) -explicit -vopt -stats=none
-GEN_VCOM_LOG_EXT=vcom.log
-GEN_VSIM=vsim
-GEN_VSIMOPTS=-work $(GEN_WORK) -t ps -c -onfinish stop -do "onfinish exit; run -all"
+MSQ_WORK=msq_work
+MSQ_VCOM=vcom
+MSQ_VCOMOPTS=-work $(MSQ_WORK) -explicit -vopt -stats=none
+MSQ_VCOM_LOG_EXT=vcom.log
+MSQ_VSIM=vsim
+MSQ_VSIMOPTS=-work $(MSQ_WORK) -t ps -c -onfinish stop -do "onfinish exit; run -all"
 
-ifeq ($(VHDL_STD),2008)
-	GEN_VCOMOPTS:=$(GEN_VCOMOPTS) -2008
+ifeq ($(VHDL_STANDARD),2008)
+	MSQ_VCOMOPTS:=$(MSQ_VCOMOPTS) -2008
 endif
-ifdef $(VHDL_IEEE_ASSERTS)
-	ifeq ($(VHDL_IEEE_ASSERTS),FALSE)
-		GEN_VSIMOPTS=-t ps -c -onfinish stop -do "set NumericStdNoWarnings 1; onfinish exit; run -all"
-	endif
+ifeq ($(VHDL_SUPPRESS_IEEE_ASSERTS),TRUE)
+	MSQ_VSIMOPTS:=-do "set NumericStdNoWarnings 1" $(MSQ_VSIMOPTS)
 endif
 
 ################################################################################
@@ -109,7 +101,8 @@ SIM_UNITS=$(SIM_UNITS) $(strip $(1))
 
 # GHDL: compiled file takes name from source file
 GHDL_UNITS=$(GHDL_UNITS) $(notdir $(basename $(strip $(2)))).o
-GHDL_UNIT_DEPS:=$(shell $(call LOOKUP,$(strip $(3)),$(SIM_UNITS),$(GHDL_UNITS)))
+GHDL_UNIT_DEPS=
+$(foreach K,$(strip $(3)),$(eval GHDL_UNIT_DEPS=$(GHDL_UNIT_DEPS) $(call LOOKUP,$K,$(SIM_UNITS),$(GHDL_UNITS))))
 $(notdir $(basename $(strip $(2)))).o: $(strip $(2)) $(GHDL_UNIT_DEPS)
 	$(GHDL) -a $(GHDL_AOPTS) $$<
 
@@ -119,9 +112,9 @@ $(NVC_PREFIX)$(shell echo $(strip $(1))| tr a-z A-Z): $(strip $(2)) $(addprefix 
 	$(NVC) $(NVC_GOPTS) -a $$< $(NVC_AOPTS)
 
 # Questa, ModelSim etc: use log files to record compilation status
-GEN_UNITS=$(GEN_UNITS) $(strip $(1)).$(GEN_VCOM_LOG_EXT)
-$(strip $(1)).$(GEN_VCOM_LOG_EXT): $(strip $(2)) $(addsuffix .$(GEN_VCOM_LOG_EXT),$(strip $(3)))
-	$(GEN_VCOM) $(GEN_VCOMOPTS) $$< >$(strip $(1)).$(GEN_VCOM_LOG_EXT)
+MSQ_UNITS=$(MSQ_UNITS) $(strip $(1)).$(MSQ_VCOM_LOG_EXT)
+$(strip $(1)).$(MSQ_VCOM_LOG_EXT): $(strip $(2)) $(addsuffix .$(MSQ_VCOM_LOG_EXT),$(strip $(3)))
+	$(MSQ_VCOM) $(MSQ_VCOMOPTS) $$< >$(strip $(1)).$(MSQ_VCOM_LOG_EXT)
 
 endef
 
