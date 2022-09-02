@@ -23,9 +23,20 @@ all:
 
 SIM=$(MAKECMDGOALS)
 
-# get file extension for executables on this OS
+# OS specific
 ifeq ($(OS),Windows_NT)
-	EXE_EXT=exe
+DOT_EXE=.exe
+ifeq ($(GHDL_LIB),)
+GHDL_LIB=$(MINGW_PREFIX)/lib/ghdl
+endif
+else
+ifeq ($(GHDL_LIB),)
+GHDL_LIB=/usr/local/lib/ghdl
+endif
+endif
+
+ifneq (XILINX_VIVADO,)
+GHDL_LIB_XILINX_VIVADO=$(GHDL_LIB)/vendors/xilinx-vivado
 endif
 
 # key-value lookup
@@ -37,9 +48,9 @@ LOOKUP=$(word 2,$(subst ;, ,$(filter $1;%,$(join $2,$(addprefix ;,$3)))))
 ifeq ($(SIM),ghdl)
 
 GHDL=ghdl
-GHDL_AOPTS=-fsynopsys
-GHDL_EOPTS=-fsynopsys
-GHDL_ROPTS=--unbuffered
+GHDL_AOPTS=-fsynopsys $(addprefix -P,$(GHDL_LIB_XILINX_VIVADO))
+GHDL_EOPTS=-fsynopsys $(addprefix -P,$(GHDL_LIB_XILINX_VIVADO))
+GHDL_ROPTS=--unbuffered --max-stack-alloc=0
 
 ifeq ($(VHDL_RELAXED),TRUE)
 	GHDL_AOPTS:=-frelaxed $(GHDL_AOPTS)

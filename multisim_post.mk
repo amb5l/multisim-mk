@@ -6,7 +6,7 @@
 # GHDL elaboration step
 
 ifeq ($(SIM),ghdl)
-GHDL_EXE=$(SIM_TOP)$(addprefix .,$(EXE_EXT))
+GHDL_EXE=$(SIM_TOP)$(DOT_EXE)
 $(GHDL_EXE): $(GHDL_UNITS)
 	$(GHDL) -e $(GHDL_EOPTS) $(SIM_TOP)
 endif
