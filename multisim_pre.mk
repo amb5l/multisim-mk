@@ -25,7 +25,7 @@ SIM=$(MAKECMDGOALS)
 
 # get file extension for executables on this OS
 ifeq ($(OS),Windows_NT)
-	EXE_EXT=.exe
+	EXE_EXT=exe
 endif
 
 # key-value lookup

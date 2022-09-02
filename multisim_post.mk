@@ -6,7 +6,7 @@
 # GHDL elaboration step
 
 ifeq ($(SIM),ghdl)
-GHDL_EXE=$(SIM_TOP)$(EXE_EXT)
+GHDL_EXE=$(SIM_TOP)$(addprefix .,$(EXE_EXT))
 $(GHDL_EXE): $(GHDL_UNITS)
 	$(GHDL) -e $(GHDL_EOPTS) $(SIM_TOP)
 endif
@@ -54,7 +54,7 @@ vivado: run
 # cleanup
 
 clean::
-	rm -f $(wildcard *.exe) $(wildcard *.cf) $(wildcard *.o) $(wildcard *.lst)
+	rm -f $(SIM_TOP) $(SIM_TOP).exe $(wildcard *.cf) $(wildcard *.o) $(wildcard *.lst)
 	rm -rf $(NVC_WORK_DIR)
 	rm -f $(wildcard *.$(MSQ_VCOM_LOG_EXT)) $(wildcard *.ini) transcript
 	rm -rf $(MSQ_WORK)
