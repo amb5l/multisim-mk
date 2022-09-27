@@ -35,14 +35,25 @@ endif
 # global definitions
 
 .PHONY: sim
-sim:: $(SIM_DEPS)
 
 # path to this makefile include
 MULTISIM_MK:=$(lastword $(MAKEFILE_LIST))
 
-# executable file extension (OS specific)
+# date executable
+ifeq ($(DATE),)
+DATE:=$(word 1,$(shell which date 2>&1))
+endif
+ifneq (date,$(basename $(notdir $(DATE))))
+$(info )
+$(error date executable not in path)
+endif
+
+# Windows specific
 ifeq ($(OS),Windows_NT)
+# executable file extension
 DOT_EXE=.exe
+# use MSYS2 date executable, not that included in Vivado
+DATE=$(shell cygpath -w /usr/bin/date)
 endif
 
 # VHDL standard defaults to 1993
@@ -134,6 +145,12 @@ else
 VCD:=
 
 endif
+
+################################################################################
+
+# timestamp at start of compile/run simulation
+sim:: $(SIM_DEPS)
+	@$(DATE) "+%Y-%m-%d %H:%M:%S"
 
 ################################################################################
 # GHDL simulator support
@@ -357,6 +374,12 @@ endif
 vivado: sim
 
 endif
+
+################################################################################
+
+# timestamp at end of compile/run simulation
+sim:: $(SIM_DEPS)
+	@$(DATE) "+%Y-%m-%d %H:%M:%S"
 
 ################################################################################
 # cleanup (user makefile may add further recipes)
