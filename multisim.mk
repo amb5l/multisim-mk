@@ -53,7 +53,9 @@ ifeq ($(OS),Windows_NT)
 # executable file extension
 DOT_EXE=.exe
 # use MSYS2 date executable, not that included in Vivado
-DATE=$(shell cygpath -w /usr/bin/date)
+DATE=/usr/bin/date
+else
+DOT_EXE=
 endif
 
 # VHDL standard defaults to 1993
@@ -149,7 +151,7 @@ endif
 ################################################################################
 
 # timestamp at start of compile/run simulation
-sim:: $(SIM_DEPS)
+sim::
 	@$(DATE) "+%Y-%m-%d %H:%M:%S"
 
 ################################################################################
