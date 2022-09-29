@@ -78,6 +78,11 @@ endif
 # useful for cross referencing
 LOOKUP=$(word 2,$(subst ¬, ,$(filter $1¬%,$(join $2,$(addprefix ¬,$3)))))
 
+# check executable in path
+define check_exe
+$(if $(filter $1,$(notdir $(word 1,$(shell which $1 2>&1)))),,$(error $1 executable not found in path))
+endef
+
 ################################################################################
 # VCD waveform viewer support
 
@@ -155,13 +160,8 @@ ifeq ($(SIM),ghdl)
 .PHONY: ghdl
 
 # executable
-ifeq ($(GHDL),)
-GHDL:=$(word 1,$(shell which ghdl 2>&1))
-endif
-ifneq (ghdl,$(basename $(notdir $(GHDL))))
-$(info )
-$(error ghdl executable not in path)
-endif
+GHDL=ghdl
+$(eval $(call check_exe,$(GHDL)))
 
 # VHDL standard
 ifeq ($(VHDL_STANDARD),2008)
@@ -172,7 +172,7 @@ endif
 
 # installation path
 ifeq ($(GHDL_PREFIX),)
-GHDL_PREFIX:=$(dir $(GHDL))..
+GHDL_PREFIX:=$(dir $(shell which $(GHDL)))..
 endif
 
 # options: analysis, elaboration, run
@@ -212,13 +212,8 @@ ifeq ($(SIM),nvc)
 .PHONY: nvc
 
 # executable
-ifeq ($(NVC),)
-NVC:=$(word 1,$(shell which nvc 2>&1))
-endif
-ifneq (nvc,$(basename $(notdir $(NVC))))
-$(info )
-$(error nvc executable not in path)
-endif
+NVC=nvc
+$(eval $(call check_exe,$(NVC)))
 
 # VHDL standard
 NVC_STD:=$(VHDL_STANDARD)
@@ -262,20 +257,10 @@ ifneq ($(filter $(SIM),modelsim questa),)
 .PHONY: modelsim questa
 
 # executables
-ifeq ($(VCOM),)
-VCOM:=$(word 1,$(shell which vcom 2>&1))
-endif
-ifneq (vcom,$(basename $(notdir $(VCOM))))
-$(info )
-$(error vcom executable not in path)
-endif
-ifeq ($(VSIM),)
-VSIM:=$(word 1,$(shell which vsim 2>&1))
-endif
-ifneq (vsim,$(basename $(notdir $(VSIM))))
-$(info )
-$(error vsim executable not in path)
-endif
+VCOM=vcom
+$(eval $(call check_exe,$(VCOM)))
+VSIM=vsim
+$(eval $(call check_exe,$(VSIM)))
 
 # VHDL standard
 ifeq ($(VHDL_STANDARD),2008)
@@ -335,11 +320,7 @@ ifeq ($(SIM),vivado)
 
 .PHONY: vivado
 
-# check executable
-ifneq (vivado,$(notdir $(word 1,$(shell which vivado 2>&1))))
-$(info )
-$(error Vivado executable not in path)
-endif
+$(eval $(call check_exe,vivado))
 
 # path to xilinx-mk
 # assume it is at same level of filesystem hierarchy as multisim-mk by default
