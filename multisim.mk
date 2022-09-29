@@ -39,23 +39,16 @@ endif
 # path to this makefile include
 MULTISIM_MK:=$(lastword $(MAKEFILE_LIST))
 
-# date executable
-ifeq ($(DATE),)
-DATE:=$(word 1,$(shell which date 2>&1))
-endif
-ifneq (date,$(basename $(notdir $(DATE))))
-$(info )
-$(error date executable not in path)
-endif
-
-# Windows specific
+# Windows/MSYS2 specific
 ifeq ($(OS),Windows_NT)
 # executable file extension
 DOT_EXE=.exe
-# use MSYS2 date executable, not that included in Vivado
-DATE=/usr/bin/date
-else
-DOT_EXE=
+# check for MSYS2
+ifeq ($(findstring msys,$(shell make --version)),)
+$(info make executable: $(shell which make))
+$(info $(shell make --version))
+$(error not running MSYS2 make)
+endif
 endif
 
 # VHDL standard defaults to 1993
@@ -152,7 +145,7 @@ endif
 
 # timestamp at start of compile/run simulation
 sim::
-	@$(DATE) "+%Y-%m-%d %H:%M:%S"
+	@date "+%Y-%m-%d %H:%M:%S"
 
 ################################################################################
 # GHDL simulator support
@@ -380,8 +373,8 @@ endif
 ################################################################################
 
 # timestamp at end of compile/run simulation
-sim:: $(SIM_DEPS)
-	@$(DATE) "+%Y-%m-%d %H:%M:%S"
+sim::
+	@date "+%Y-%m-%d %H:%M:%S"
 
 ################################################################################
 # cleanup (user makefile may add further recipes)
