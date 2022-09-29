@@ -163,19 +163,17 @@ ifeq ($(SIM),ghdl)
 GHDL=ghdl
 $(eval $(call check_exe,$(GHDL)))
 
-# VHDL standard
-ifeq ($(VHDL_STANDARD),2008)
-GHDL_STD:=08
-else ifeq ($(VHDL_STANDARD),1993)
-GHDL_STD:=93
-endif
-
 # installation path
 ifeq ($(GHDL_PREFIX),)
 GHDL_PREFIX:=$(dir $(shell which $(GHDL)))..
 endif
 
 # options: analysis, elaboration, run
+ifeq ($(VHDL_STANDARD),2008)
+GHDL_STD:=08
+else ifeq ($(VHDL_STANDARD),1993)
+GHDL_STD:=93
+endif
 GHDL_AOPTS:=$(GHDL_AOPTS) --std=$(GHDL_STD) -fsynopsys -Wno-hide -Wno-shared $(addprefix -P$(GHDL_PREFIX)/lib/ghdl/vendors/,$(GHDL_LIBS))
 GHDL_EOPTS:=$(GHDL_EOPTS) --std=$(GHDL_STD) -fsynopsys $(addprefix -P$(GHDL_PREFIX)/lib/ghdl/vendors/,$(GHDL_LIBS))
 GHDL_ROPTS:=$(GHDL_ROPTS) --unbuffered --max-stack-alloc=0
