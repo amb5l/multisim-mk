@@ -23,7 +23,8 @@ all:
 	$(info $(INDENT)nvc)
 	$(info $(INDENT)questa)
 	$(info $(INDENT)modelsim)
-	$(info $(INDENT)vivado)
+	$(info $(INDENT)vivado (project mode))
+	$(info $(INDENT)xsim (non project mode))
 	$(info )
 	$(info Append gtkwave to your make command to invoke GTKWave following simulation:)
 	$(info $(INDENT)make <simulator> gtkwave)
@@ -312,7 +313,7 @@ modelsim questa: sim
 endif
 
 ################################################################################
-# Vivado simulator support
+# Xilinx Vivado simulator support (project mode)
 
 ifeq ($(SIM),vivado)
 
@@ -325,7 +326,6 @@ $(eval $(call check_exe,vivado))
 ifeq ($(XILINX_MK),)
 XILINX_MK=$(dir $(MULTISIM_MK))../xilinx-mk
 endif
-
 VIVADO_MK=vivado -mode tcl -notrace -nolog -nojournal -source $(XILINX_MK)/vivado_mk.tcl -tclargs xsim xsim
 
 # compile and run
@@ -346,6 +346,66 @@ $(foreach RUN,$(RUNS),$(eval $(call RR_SIMGEN,$(call LOOKUP,$(RUN),$(RUNS),$(GEN
 endif
 
 vivado: sim
+
+endif
+
+################################################################################
+# Xilinx Vivado simulator support (non project mode)
+
+ifeq ($(SIM),xsim)
+
+.PHONY: xsim
+
+# executables
+XVHDL=xvhdl
+$(eval $(call check_exe,$(XVHDL)))
+XELAB=xelab
+$(eval $(call check_exe,$(XVHDL)))
+XSIM=xsim
+$(eval $(call check_exe,$(XSIM)))
+
+# options
+XVHDL_OPTS:=$(if $(filter 2008,$(VHDL_STANDARD)),--2008,)
+XELAB_OPTS:=--debug typical --O2
+XSIM_OPTS:=-runall --onerror quit --onfinish quit
+ifneq ($(VHDL_RELAXED),)
+XVHDL_OPTS:=$(XVHDL_OPTS) --relax
+XELAB_OPTS:=$(XELAB_OPTS) --relax
+endif
+ifeq ($(VHDL_SUPPRESS_IEEE_ASSERTS),)
+XSIM_OPTS:=$(XSIM_OPTS) --ieeewarnings
+endif
+
+# compile and run
+sim::
+ifeq ($(OS),Windows_NT)
+	cmd.exe /C "call $(XVHDL).bat $(XVHDL_OPTS) --work $(WORK) $(SOURCES)"
+else
+	$(XVHDL) $(XVHDL_OPTS) --work $(WORK) $(SOURCES)
+endif
+ifeq ($(GENERICS),)
+ifeq ($(OS),Windows_NT)
+	cmd.exe /C "call $(XELAB).bat $(XELAB_OPTS) -top $(TOP) -snapshot $(TOP)_snapshot"
+	cmd.exe /C "call $(XSIM).bat $(XSIM_OPTS) $(addprefix --vcdfile ,$(VCD)) $(TOP)_snapshot"
+else
+	$(XELAB) $(XELAB_OPTS) -top $(TOP) -snapshot $(TOP)_snapshot
+	$(XSIM) $(XSIM_OPTS) $(addprefix --vcdfile ,$(VCD)) $(TOP)_snapshot
+endif
+else
+define RR_SIMGEN
+sim::
+ifeq ($(OS),Windows_NT)
+	cmd.exe /C "call $(XELAB).bat --debug typical --O2 --relax -L work --snapshot cfg_tb_hdmi_tpg_snapshot1 cfg_tb_hdmi_tpg $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))"
+	cmd.exe /C "call $(XSIM).bat $(XSIM_OPTS) $(addprefix --vcdfile ,$3) $(TOP)_snapshot$1"
+else
+	$(XELAB) --debug typical --O2 --relax -L work --snapshot cfg_tb_hdmi_tpg_snapshot1 cfg_tb_hdmi_tpg $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))
+	$(XSIM) $(XSIM_OPTS) $(addprefix --vcdfile ,$3) $(TOP)_snapshot$1
+endif
+endef
+$(foreach RUN,$(RUNS),$(eval $(call RR_SIMGEN,$(RUN),$(call LOOKUP,$(RUN),$(RUNS),$(GENERICS)),$(call LOOKUP,$(RUN),$(RUNS),$(VCD)))))
+endif
+
+xsim: sim
 
 endif
 
@@ -372,10 +432,15 @@ clean::
 clean::
 	rm -f modelsim.ini transcript $(wildcard *.vstf)
 
-# Vivado
+# Vivado (project mode)
 clean::
 	rm -f .Xil
 	rm -rf xsim
+
+# Vivado (non project mode)
+clean::
+	rm -f $(wildcard *.jou) $(wildcard *.log) $(wildcard *.pb) $(wildcard *.wdb)
+	rm -rf xsim.dir
 
 # waveform
 clean::
