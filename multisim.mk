@@ -21,10 +21,9 @@ all:
 	$(info Supported options for <simulator>:)
 	$(info $(INDENT)ghdl)
 	$(info $(INDENT)nvc)
-	$(info $(INDENT)questa)
-	$(info $(INDENT)modelsim)
-	$(info $(INDENT)vivado (project mode))
-	$(info $(INDENT)xsim (non project mode))
+	$(info $(INDENT)vsim    (ModelSim, Questa))
+	$(info $(INDENT)vivado  (project mode))
+	$(info $(INDENT)xsim    (non project mode))
 	$(info )
 	$(info Append gtkwave to your make command to invoke GTKWave following simulation:)
 	$(info $(INDENT)make <simulator> gtkwave)
@@ -249,11 +248,11 @@ nvc: sim
 endif
 
 ################################################################################
-# ModelSim/Questa simulator support
+# vsim simulator support (ModelSim, Questa etc)
 
-ifneq ($(filter $(SIM),modelsim questa),)
+ifeq ($(SIM),vsim)
 
-.PHONY: modelsim questa
+.PHONY: vsim
 
 # executables
 VCOM=vcom
@@ -308,7 +307,7 @@ endef
 $(foreach RUN,$(RUNS),$(eval $(call RR_SIMGEN,$(call LOOKUP,$(RUN),$(RUNS),$(GENERICS)),$(call LOOKUP,$(RUN),$(RUNS),$(VCD)))))
 endif
 
-modelsim questa: sim
+vsim: sim
 
 endif
 
@@ -424,11 +423,11 @@ sim::
 clean::
 	rm -f $(TOP) $(TOP).exe $(wildcard *.cf) $(wildcard *.o) $(wildcard *.lst)
 
-# NVC, ModelSim, Questa
+# NVC, vsim
 clean::
 	rm -rf $(WORK)
 
-# ModelSim, Questa
+# vsim
 clean::
 	rm -f modelsim.ini transcript $(wildcard *.vstf)
 
