@@ -1,25 +1,33 @@
 # multisim-mk
 
-Simple support for driving VHDL simulators from makefiles.
+Simple support for driving VHDL simulators from makefiles on Linux and Windows/MSYS2.
 
-To get started:
-1. Add multisim-mk to your repo as a submodule.
-2. Copy the template makefile to your build directory and edit it as required for your design.
+To get started: add `multisim-mk` to your repo as a submodule, copy the template makefile to your build directory, and edit it to add your sources.
 
-When invoking make, the simulator must be specified (as a make target):
+When invoking make, the simulator must be specified (as a make target) as follows:
 
     make <simulator>
 
 Supported simulators are listed below:
 
-| \<simulator\> | Description     |
-|---------------|-----------------|
-| ghdl          | GHDL            |
-| nvc           | NVC             |
-| msq           | ModelSim/Questa |
-| vivado        | Vivado          |
+| \<simulator\> | Description                                    |
+|---------------|------------------------------------------------|
+| ghdl          | [GHDL](https://ghdl.free.fr/)                  |
+| nvc           | [NVC](https://www.nickg.me.uk/nvc/)            |
+| vsim          | uses vcom/vsim commands (ModelSim, Questa etc) |
+| vivado        | Xilinx Vivado (project mode)                   |
+| xsim          | Xilinx Vivado (non project mode)               |
 
-When used with Vivado, multisim-mk depends on xilinx-mk, so you will need to add this as another submodule to your repo.
+Append `gtkwave` to the make command (e.g. `make ghdl gtkwave`) to produce VCD file(s) and invoke the GTKWave waveform viewer after simulation.
+
+If the `vivado` target is specified, a Vivado project is generated that may be opened in the IDE.
+
+**Note:** Beware running the Vivado "settings" script on Windows: this will prepend paths that include Xilinx MinGW builds of GNU tools to the system path, and stop multisim-mk from working. Instead, just add the main Vivado binary directory to your path.
+
+## Dependancies
+
+1) For the `vivado` target, https://github.com/amb5l/xilinx-mk is required.
+3) For GTKWave support, https://github.com/amb5l/vcd2gtkw is recommended - this generates an initial waveform save file.
 
 ## License
 
