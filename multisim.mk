@@ -101,7 +101,7 @@ endif
 
 # waveform file(s)
 ifeq ($(VCD),)
-ifeq ($(GENERICS),)
+ifeq ($(RUNS),1)
 VCD:=wave.vcd
 else
 VCD=$(addsuffix .vcd,$(addprefix wave,$(RUNS)))
