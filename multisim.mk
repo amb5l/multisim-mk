@@ -395,10 +395,10 @@ else
 define RR_SIMGEN
 sim::
 ifeq ($(OS),Windows_NT)
-	cmd.exe /C "call $(XELAB).bat --debug typical --O2 --relax -L work --snapshot cfg_tb_hdmi_tpg_snapshot1 cfg_tb_hdmi_tpg $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))"
+	cmd.exe /C "call $(XELAB).bat --debug typical --O2 --relax -L work --snapshot $(TOP)_snapshot$1 $(TOP) $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))"
 	cmd.exe /C "call $(XSIM).bat $(XSIM_OPTS) $(addprefix --vcdfile ,$3) $(TOP)_snapshot$1"
 else
-	$(XELAB) --debug typical --O2 --relax -L work --snapshot cfg_tb_hdmi_tpg_snapshot1 cfg_tb_hdmi_tpg $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))
+	$(XELAB) --debug typical --O2 --relax -L work --snapshot $(TOP)_snapshot$1 $(TOP) $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))
 	$(XSIM) $(XSIM_OPTS) $(addprefix --vcdfile ,$3) $(TOP)_snapshot$1
 endif
 endef
