@@ -5,13 +5,13 @@
 # Supported waveform viewers: GTKWave
 # Supported platforms: Linux, Windows/MSYS2
 # Notes:
-#  1) For Vivado support, https://github.com/amb5l/xilinx-mk is required.
+#  1) For Vivado project mode, https://github.com/amb5l/xilinx-mk is required.
 #  2) For GTKWave support, https://github.com/amb5l/vcd2gtkw is recommended.
 ################################################################################
 # check for supported simulator
 
 SIM:=$(word 1,$(MAKECMDGOALS))
-ifeq ($(filter $(SIM),ghdl nvc modelsim questa vivado clean),)
+ifeq ($(filter $(SIM),ghdl nvc vsim vivado xsim clean),)
 INDENT:=$(subst ,,  )
 all:
 	$(info )
