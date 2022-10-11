@@ -314,6 +314,9 @@ endif
 ################################################################################
 # Xilinx Vivado simulator support (project mode)
 
+VIVADO_DIR=vivado
+VIVADO_PROJ=vivado
+
 ifeq ($(SIM),vivado)
 
 .PHONY: vivado
@@ -325,7 +328,7 @@ $(eval $(call check_exe,vivado))
 ifeq ($(XILINX_MK),)
 XILINX_MK=$(dir $(MULTISIM_MK))../xilinx-mk
 endif
-VIVADO_MK=vivado -mode tcl -notrace -nolog -nojournal -source $(XILINX_MK)/vivado_mk.tcl -tclargs xsim xsim
+VIVADO_MK=vivado -mode tcl -notrace -nolog -nojournal -source $(XILINX_MK)/vivado_mk.tcl -tclargs $(VIVADO_DIR) $(VIVADO_PROJ)
 
 # compile and run
 sim::
@@ -435,7 +438,7 @@ clean::
 # Vivado (project mode)
 clean::
 	rm -f .Xil
-	rm -rf xsim
+	rm -rf $(VIVADO_DIR)
 
 # Vivado (non project mode)
 clean::
