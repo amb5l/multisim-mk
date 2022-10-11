@@ -377,10 +377,11 @@ endif
 
 # compile and run
 sim::
+	@echo "$(WORK)=./$(WORK)" > xsim.ini
 ifeq ($(OS),Windows_NT)
-	cmd.exe /C "call $(XVHDL).bat $(XVHDL_OPTS) --work $(WORK) $(SOURCES)"
+	cmd.exe /C "call $(XVHDL).bat $(XVHDL_OPTS) -work $(WORK) $(SOURCES)"
 else
-	$(XVHDL) $(XVHDL_OPTS) --work $(WORK) $(SOURCES)
+	$(XVHDL) $(XVHDL_OPTS) -work $(WORK) $(SOURCES)
 endif
 ifeq ($(GENERICS),)
 ifeq ($(OS),Windows_NT)
@@ -394,10 +395,10 @@ else
 define RR_SIMGEN
 sim::
 ifeq ($(OS),Windows_NT)
-	cmd.exe /C "call $(XELAB).bat --debug typical --O2 --relax -L work --snapshot $(TOP)_snapshot$1 $(TOP) $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))"
+	cmd.exe /C "call $(XELAB).bat --debug typical --O2 --relax -L $(WORK) --snapshot $(TOP)_snapshot$1 $(TOP) $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))"
 	cmd.exe /C "call $(XSIM).bat $(XSIM_OPTS) $(addprefix --vcdfile ,$3) $(TOP)_snapshot$1"
 else
-	$(XELAB) --debug typical --O2 --relax -L work --snapshot $(TOP)_snapshot$1 $(TOP) $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))
+	$(XELAB) --debug typical --O2 --relax -L $(WORK) --snapshot $(TOP)_snapshot$1 $(TOP) $(addprefix -generic_top \",$(addsuffix \",$(subst ;, ,$2)))
 	$(XSIM) $(XSIM_OPTS) $(addprefix --vcdfile ,$3) $(TOP)_snapshot$1
 endif
 endef
@@ -438,7 +439,7 @@ clean::
 
 # Vivado (non project mode)
 clean::
-	rm -f $(wildcard *.jou) $(wildcard *.log) $(wildcard *.pb) $(wildcard *.wdb)
+	rm -f xsim.ini $(wildcard *.jou) $(wildcard *.log) $(wildcard *.pb) $(wildcard *.wdb)
 	rm -rf xsim.dir
 
 # waveform
